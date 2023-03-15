@@ -14,7 +14,7 @@ class Interpolator:
             shift_w : amount of shifting in horizontal axis
             '''
             left_top_points, left_bottom_points, right_top_points, right_bottom_points = points[0], points[1], points[2], points[3]
-
+            
             left_side_points = (1-shift_w) * left_top_points + shift_w * left_bottom_points
             right_side_points = (1-shift_w) * right_top_points + shift_w * right_bottom_points
 
