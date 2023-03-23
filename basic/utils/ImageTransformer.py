@@ -148,6 +148,66 @@ class ImageTransformer:
 
         self.image = new_frame
         return self
+    
+    def filtering(self, filter_matrix):
+        '''
+        이미지에 필터링을 해주는 함수
+        '''
+        frame = self.image.copy()
+        frame_h, frame_w, frame_c = frame.shape
+
+        filter_h, filter_w = filter_matrix.shape[:2]
+
+        if filter_h != filter_w:
+            return frame
+
+        filtered_frame_h = frame_h-(filter_h-1)
+        filtered_frame_w = frame_w-(filter_w-1)
+        filtered_frame = np.zeros((filtered_frame_h, filtered_frame_w, 3))
+
+        grid_h, grid_w, grid_c = np.mgrid[:filtered_frame_h, :filtered_frame_w, :3]
+
+        grid_h = np.reshape(grid_h, -1)
+        grid_w = np.reshape(grid_w, -1)
+        grid_c = np.reshape(grid_c, -1)
+
+        target_value = None
+        for i in range(filter_h):
+            target_value_row = None
+
+            for j in range(filter_w):
+                value = np.reshape(frame[grid_h+i,grid_w+j,grid_c], (-1,1,1))
+                if target_value_row is None:
+                    target_value_row = value
+                    continue
+                target_value_row = np.concatenate([
+                    target_value_row,
+                    value
+                ], -1)
+
+            if target_value is None:
+                target_value = target_value_row
+                continue
+
+            target_value = np.concatenate([
+                target_value,
+                target_value_row
+            ], -2)
+
+        filter_matrix = np.expand_dims(filter_matrix, 0)
+
+        filtered_value = target_value * filter_matrix
+
+        filtered_value = np.sum(filtered_value, (-2,-1))
+
+        filtered_value[filtered_value < 0] = 0
+        filtered_value[filtered_value > 255] = 255
+
+        filtered_frame[grid_h, grid_w, grid_c] = filtered_value
+        
+        self.image = filtered_frame.astype(np.uint8)
+
+        return self
         
     def build(self):
         return self.image
